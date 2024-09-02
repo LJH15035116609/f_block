@@ -149,40 +149,78 @@
 
     <img src="https://raw.githubusercontent.com/LJH15035116609/f_block/main/pic.png" alt="Site Icon" class="icon">
 
+    <!-- 在此处插入JavaScript代码 -->
     <script>
-        // JavaScript to handle button clicks and inputs
-        const metalButtons = document.querySelectorAll('.metal-buttons button');
-        const valenceButtons = document.querySelectorAll('.valence-buttons button');
+        // JavaScript 代码
         let selectedMetal = '';
         let selectedValence = '';
 
+        // 保存匹配信息到data.csv
+        function saveToDataCSV(metal, valence) {
+            fetch('/save_to_data_csv', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ metal, valence }),
+            }).then(response => response.json()).then(data => {
+                console.log('Data saved:', data);
+            }).catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        // 处理金属按钮点击
+        const metalButtons = document.querySelectorAll('.metal-buttons button');
         metalButtons.forEach(button => {
             button.addEventListener('click', () => {
                 selectedMetal = button.textContent;
-                alert(`Selected Metal: ${selectedMetal}`);
+                saveToDataCSV(selectedMetal, selectedValence);
             });
         });
 
+        // 处理价态按钮点击
+        const valenceButtons = document.querySelectorAll('.valence-buttons button');
         valenceButtons.forEach(button => {
             button.addEventListener('click', () => {
                 selectedValence = button.textContent;
-                alert(`Selected Valence: ${selectedValence}`);
+                saveToDataCSV(selectedMetal, selectedValence);
             });
         });
 
+        // 处理View按钮点击
         document.getElementById('view-btn').addEventListener('click', () => {
             const ligandSmiles = document.getElementById('ligand-smiles').value;
-            document.querySelector('.content-box').textContent = `SMILES: ${ligandSmiles}`;
-            // Here you would typically render a molecular structure image or 3D model
+            fetch('/save_smiles_and_generate_descriptors', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ligandSmiles, metal: selectedMetal }),
+            }).then(response => response.json()).then(data => {
+                // 更新图像显示
+                document.querySelector('.content-box').innerHTML = `<img src="${data.image_url}" alt="Ligand Structure">`;
+            }).catch((error) => {
+                console.error('Error:', error);
+            });
         });
 
+        // 处理Predict按钮点击
         document.getElementById('predict-btn').addEventListener('click', () => {
-            const ligandSmiles = document.getElementById('ligand-smiles').value;
             const ionicStrength = document.getElementById('ionic-strength').value;
-            alert(`Metal: ${selectedMetal}\nValence: ${selectedValence}\nSMILES: ${ligandSmiles}\nIonic Strength: ${ionicStrength}`);
-            // Here you would typically send this data to your backend for processing
+            fetch('/predict_logk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ionicStrength, metal: selectedMetal }),
+            }).then(response => response.json()).then(data => {
+                alert('Prediction result: ' + data.prediction);
+            }).catch((error) => {
+                console.error('Error:', error);
+            });
         });
     </script>
 </body>
 </html>
-
+      
